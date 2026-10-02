@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rahul Kumar | Systems engineer</title>
+<meta name="description" content="Rahul Kumar writes systems software in Rust and C++: vector search, database storage engines and order books.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1318; --panel:#151b22; --line:#252d37; --ink:#e7e4dd; --muted:#9aa0a6;
+  --accent:#f0b44c; --bid:#5fb3a1; --ask:#e07a6a;
+  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:light){
+  :root{--bg:#f6f4ef;--panel:#ffffff;--line:#dedad0;--ink:#1c1f23;--muted:#5d646b;--accent:#a8620a;--bid:#1f7a68;--ask:#b4432f}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1.0625rem/1.65 var(--sans);
+  background-image:radial-gradient(circle,color-mix(in srgb,var(--ink) 9%,transparent) 1px,transparent 1px);background-size:28px 28px}
+a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+a:hover{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px}
+header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;gap:20px;height:56px}
+header .name{font-weight:600;text-decoration:none;margin-right:auto}
+header nav{display:flex;gap:20px;font-size:.95rem}
+header nav a{color:var(--muted);text-decoration:none}
+header nav a:hover{color:var(--ink)}
+.kbtn{font:500 .8rem var(--mono);color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
+.kbtn:hover{color:var(--ink);border-color:var(--muted)}
+@media(max-width:640px){header nav{display:none}}
+
+.hero{padding:96px 0 56px}
+h1{font:600 clamp(2.1rem,5.2vw,3.4rem)/1.12 var(--sans);letter-spacing:-.025em;margin:0 0 24px;max-width:20ch}
+.lede{max-width:60ch;color:var(--muted);font-size:1.15rem;margin:0 0 28px}
+.lede b{color:var(--ink);font-weight:500}
+.links{display:flex;flex-wrap:wrap;gap:12px 24px}
+
+section{padding:56px 0;border-top:1px solid var(--line)}
+h2{font:600 1.5rem/1.2 var(--sans);letter-spacing:-.015em;margin:0 0 8px}
+.meta{font:400 .85rem var(--mono);color:var(--muted);margin:0 0 20px}
+p{max-width:64ch;margin:0 0 16px}
+.case{display:grid;grid-template-columns:1fr;gap:24px;margin-top:24px}
+
+.demo{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.demo-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:.9rem;color:var(--muted)}
+.demo-bar button{font:500 .8rem var(--mono);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer}
+.demo-bar button:hover{border-color:var(--accent);color:var(--accent)}
+canvas{display:block;width:100%;cursor:crosshair}
+.out{padding:10px 14px;border-top:1px solid var(--line);font:400 .85rem/1.5 var(--mono);color:var(--muted);min-height:3.4em}
+
+.book{display:grid;grid-template-columns:1fr 1fr}
+.ladder{padding:10px 14px;font:400 .9rem/1.9 var(--mono)}
+.lv{display:flex;justify-content:space-between;padding:0 8px;background:linear-gradient(90deg,var(--c) 0 var(--w),transparent var(--w)) no-repeat;background-size:100% 100%}
+.lv.a{--c:color-mix(in srgb,var(--ask) 22%,transparent);color:var(--ask)}
+.lv.b{--c:color-mix(in srgb,var(--bid) 22%,transparent);color:var(--bid)}
+.spr{text-align:center;color:var(--muted);font-size:.8rem;border-block:1px dashed var(--line);margin:4px 0}
+.tape{padding:10px 14px;border-left:1px solid var(--line);font:400 .85rem/1.9 var(--mono);color:var(--muted)}
+.tape h3{font:500 .85rem var(--sans);margin:0 0 6px;color:var(--ink)}
+.tape .buy{color:var(--bid)}.tape .sell{color:var(--ask)}
+@media(max-width:640px){.book{grid-template-columns:1fr}.tape{border-left:0;border-top:1px solid var(--line)}}
+
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+caption{text-align:left;color:var(--muted);font-size:.85rem;padding-bottom:8px}
+th,td{text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:500;color:var(--muted)}
+td.num{font-family:var(--mono)}
+.todo{border:1px dashed var(--accent);color:var(--accent);padding:0 6px;border-radius:4px}
+
+dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 24px;margin:0;max-width:64ch}
+dt{color:var(--muted)}dd{margin:0}
+footer{padding:56px 0 72px;border-top:1px solid var(--line);color:var(--muted)}
+
+dialog{width:min(520px,92vw);margin:12vh auto auto;padding:0;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog input{width:100%;background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--ink);font:400 1rem var(--sans);padding:14px 16px}
+dialog input:focus{outline:none;border-bottom-color:var(--accent)}
+dialog ul{list-style:none;margin:0;padding:6px}
+dialog li a{display:flex;justify-content:space-between;padding:9px 12px;border-radius:6px;text-decoration:none}
+dialog li a:hover,dialog li a:focus-visible{background:var(--bg)}
+dialog li span{color:var(--muted);font-size:.85rem}
+
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:20px 0}
+.flow .st{flex:1 1 130px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;transition:border-color .15s,color .15s}
+.flow .st b{display:block;font-weight:600;font-size:.95rem}
+.flow .st span{font-size:.82rem;color:var(--muted)}
+.flow .st.on{border-color:var(--accent)}
+.flow .st.on b{color:var(--accent)}
+.flow i{font:400 .78rem var(--mono);color:var(--muted);font-style:normal}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+@media(max-width:640px){.flow i{display:none}}
+
+.project{margin-top:64px;padding-top:40px;border-top:1px solid var(--line)}
+.project:first-of-type{margin-top:40px}
+.ph{font:600 1.6rem/1.2 var(--sans);letter-spacing:-.015em;margin:0 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.tag{font:500 .75rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:1px 10px;letter-spacing:0}
+.idx{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.idx span{color:var(--muted)}
+.job{margin:0 0 32px}
+.job h3{font:600 1.05rem/1.4 var(--sans);margin:0}
+.job .when{font:400 .85rem var(--mono);color:var(--muted);margin:2px 0 10px}
+.job ul{margin:0;padding-left:1.1rem;max-width:64ch}
+.job li{margin-bottom:6px}
+
+.prose{max-width:64ch}
+.lk{font:400 .8rem var(--mono);color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer}
+.lk input{accent-color:var(--accent)}
+.lk-grid{display:grid;grid-template-columns:1.5fr 1fr}
+#lk-log{list-style:none;margin:0;padding:12px 14px;font:400 .85rem/1.5 var(--mono);min-height:10.5em}
+#lk-log li{padding:3px 0;color:var(--muted)}
+#lk-log b{font-weight:500;margin-right:6px}
+#lk-log .a b{color:var(--accent)}#lk-log .b b{color:var(--bid)}
+.rec{border-left:1px solid var(--line);padding:12px 14px;display:grid;gap:10px;align-content:start}
+.rec .f span{display:block;font-size:.8rem;color:var(--muted)}
+.rec .f b{font:500 1rem var(--mono)}
+.rec .f.lost b{color:var(--ask);text-decoration:line-through}
+.rec .f.ok b{color:var(--bid)}
+.now{border-left:2px solid var(--accent);padding:2px 0 2px 16px;margin:24px 0;max-width:64ch}
+.now p{margin:0 0 6px}
+.tools{font:400 .88rem/1.8 var(--mono);color:var(--muted);max-width:64ch}
+@media(max-width:640px){.lk-grid{grid-template-columns:1fr}.rec{border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="name" href="#top">Rahul Kumar</a>
+    <nav aria-label="Sections">
+      <a href="#work">Projects</a><a href="#experience">Experience</a><a href="#about">About</a><a href="#contact">Contact</a>
+    </nav>
+    <button class="kbtn" id="pal-open" aria-label="Open quick navigation">Jump to <kbd style="font:inherit">Ctrl K</kbd></button>
+  </div>
+</header>
+
+<main class="wrap" id="top">
+  <div class="hero">
+    <h1>I write systems software that has to be fast and correct.</h1>
+    <p class="lede">I'm a final-year Computer Science (Data Science) student at VIT Vellore. I build in Rust: a vector search index, a lock-free order matching engine, and a study of how Neon separates Postgres compute from storage. The demos below run live in your browser.</p>
+    <div class="links">
+      <a href="#work">See the projects</a>
+      <a href="https://github.com/Rahulkumar20023">GitHub</a>
+      <a href="https://www.linkedin.com/in/rahul-kumar-52726327b/">LinkedIn</a>
+      <a href="https://drive.google.com/file/d/1OEEmuS-287_5x4veJMXZrQjXEduQ_1gc/view?usp=sharing" target="_blank" rel="noopener">Resume (PDF)</a>
+    </div>
+  </div>
+
+  <section id="work">
+    <h2>Projects</h2>
+    <ul class="idx">
+      <li><a href="#hnsw-sec">tiny-hnsw</a> <span>Vector search engine in Rust (in progress)</span></li>
+      <li><a href="#book-sec">LMAX-rs</a> <span>Lock-free order matching engine in Rust</span></li>
+      <li><a href="#neon-sec">Neon architecture study</a> <span>Learning project (in progress)</span></li>
+    </ul>
+
+    <article id="hnsw-sec" class="project">
+      <h3 class="ph">tiny-hnsw <span class="tag">In progress</span></h3>
+      <p class="meta">Rust · HNSW · Qdrant · LanceDB · <a href="https://github.com/Rahulkumar20023/tiny-hnsw">source</a></p>
+      <p>HNSW (Hierarchical Navigable Small World) is the graph algorithm behind vector databases like Qdrant and Milvus. It searches a sparse top layer first, then drops into denser layers beneath it. I implemented it from scratch in Rust, with multi-layer graph construction, greedy descent, beam-search retrieval, diversity-pruning neighbour selection and tombstone-based soft deletion.</p>
+      <p>I'm now integrating Qdrant with LanceDB (columnar vector storage) to build a hybrid search pipeline: low-latency candidate generation, then cost-efficient filtering and re-ranking at scale. Click the diagram to place a query and watch the search descend.</p>
+      <div class="demo">
+        <div class="demo-bar"><span>Search descent (60 points, simplified greedy search)</span><button id="hnsw-run" type="button">Random query</button></div>
+        <canvas id="hnsw" role="img" aria-label="Three stacked graph layers. Clicking places a query point and animates a greedy search from the sparse top layer down to the dense bottom layer."></canvas>
+        <div class="out" id="hnsw-out" aria-live="polite">Click inside the diagram to place a query.</div>
+      </div>
+      <div class="table-wrap" style="margin-top:20px">
+        <table>
+          <caption>Latency and recall benchmarks <span class="todo">p99 and hardware</span></caption>
+          <thead><tr><th>Dimensions</th><th>Vectors</th><th>recall@10</th><th>p50 search</th></tr></thead>
+          <tbody><tr><td class="num">768</td><td class="num">10,000</td><td class="num">up to 89%</td><td class="num">under 2 ms</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article id="book-sec" class="project">
+      <h3 class="ph">LMAX-rs</h3>
+      <p class="meta">Rust · lock-free ring buffer · order book · <a href="https://github.com/Rahulkumar20023/LMAX-rs">source</a></p>
+      <p>A matching engine keeps resting orders sorted by price and arrival time, and crosses incoming orders against them. Mine started as a single-threaded design and evolved into a lock-free, ring-buffer pipeline. Its stages (unmarshaller, journal, replicator and business logic) are coordinated by atomic sequence numbers, with no locks on the hot path. The order book gives O(1) best bid/ask lookup and constant-time cancellation.</p>
+      <p>The demo below is a small JavaScript simulation of the book mechanics. It is not the engine itself.</p>
+      <div class="demo">
+        <div class="demo-bar"><span>Simulated limit order book</span><button id="book-run" type="button">Pause</button></div>
+        <div class="book" aria-hidden="true">
+          <div class="ladder" id="book"></div>
+          <div class="tape"><h3>Recent trades</h3><div id="tape"></div></div>
+        </div>
+        <div class="out" id="book-stat">Resting orders are added, cancelled and matched at random.</div>
+      </div>
+      <div class="table-wrap" style="margin-top:20px">
+        <table>
+          <caption>Stress-test results <span class="todo"> hardware and build flags</span></caption>
+          <thead><tr><th>Metric</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>Throughput</td><td class="num">1.0–1.3M messages/sec</td></tr>
+            <tr><td>p99 latency</td><td class="num">about 100–200 ns</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article id="neon-sec" class="project">
+      <h3 class="ph">Neon architecture study <span class="tag">In progress</span></h3>
+      <p class="meta">Learning project · PostgreSQL · log-structured storage</p>
+      <p>I'm studying how Neon separates Postgres compute from storage, and re-implementing parts of that design to understand it properly. There is no complete write-up yet. Below is my current understanding, plus a simplified model I built to check it.</p>
+      <p>Neon runs ordinary Postgres but replaces the disk underneath it. The compute node keeps no durable data, so it can stop, restart or be cloned in seconds. Everything it needs lives in a separate storage system with three parts.</p>
+      <div class="flow" id="flow" aria-label="Write path: compute, safekeepers, pageserver, object storage">
+        <div class="st"><b>Compute</b><span>Postgres, stateless</span></div><i>WAL</i>
+        <div class="st"><b>Safekeepers</b><span>3 copies, quorum ack</span></div><i>WAL</i>
+        <div class="st"><b>Pageserver</b><span>layer files</span></div><i>layers</i>
+        <div class="st"><b>Object storage</b><span>S3, long-term</span></div>
+      </div>
+      <p><b style="font-weight:600">Writes.</b> Postgres streams its write-ahead log (WAL) to the safekeepers. A change is durable once a majority of them have it. The pageserver then ingests the WAL and stores it as immutable layer files, which are uploaded to object storage.</p>
+      <p><b style="font-weight:600">Reads.</b> When Postgres needs a page, it asks the pageserver for that page at a specific log position (LSN). The pageserver finds the newest full copy of the page, an image layer, then replays any later changes stored in delta layers. Layers are never overwritten, so this works like a log-structured merge tree.</p>
+      <div class="demo" style="margin-top:20px">
+        <div class="demo-bar"><span>Pageserver layer map</span>
+          <span class="btns"><button id="n-write" type="button">Write</button><button id="n-read" type="button">Read a page</button><button id="n-comp" type="button">Compact</button><button id="n-branch" type="button">Branch</button><button id="n-bw" type="button" hidden>Write to branch</button><button id="n-reset" type="button">Reset</button></span></div>
+        <canvas id="neon" role="img" aria-label="Layer map. Rows are database pages, the horizontal axis is time (LSN). Delta layers are rectangles of changes, image layers are full snapshots drawn as vertical bars."></canvas>
+        <div class="out" id="neon-out" aria-live="polite"></div>
+      </div>
+      <p style="margin-top:20px"><b style="font-weight:600">Compaction.</b> Reading a page that has many deltas stacked above its last image means replaying a lot of WAL. Compaction writes new image layers so future reads start closer to the present. Older layers are kept until they pass the retention window, which is what allows point-in-time restore.</p>
+      <p><b style="font-weight:600">Branching.</b> Because layers are immutable, a branch is a new timeline that points at its parent's layers up to the branch point and stores only its own new writes. Creating one copies no data, whatever the database size.</p>
+      <p class="meta">A full write-up and notes on my re-implementation will go here when they are ready.</p>
+    </article>
+  </section>
+
+  <section id="experience">
+    <h2>Experience</h2>
+    <div class="job">
+      <h3>Software consultant, Brij Udyog Vihar</h3>
+      <p class="when">May 2026 – July 2026 · Real estate CRM</p>
+      <p class="prose">A real estate team with 15+ people shares one set of property listings, leads and client notes. I built and deployed the CRM they use every day. Two problems mattered most: everyone should see changes the moment they happen, and two people should never silently overwrite each other. WebSockets handle the live updates. Redis-based distributed locking handles the second problem, which you can try below.</p>
+      <div class="demo" style="margin-top:16px">
+        <div class="demo-bar"><span>Two staff edit the same lead</span>
+          <span class="btns"><label class="lk"><input type="checkbox" id="lk-on" checked> Redis lock</label><button id="lk-run" type="button">Run</button></span></div>
+        <div class="lk-grid">
+          <ol id="lk-log" aria-live="polite"></ol>
+          <div class="rec" id="lk-rec"></div>
+        </div>
+        <div class="out" id="lk-out"></div>
+      </div>
+      <p class="meta" style="margin-top:8px">A simplified illustration of the idea, not the production code.</p>
+    </div>
+    <div class="job">
+      <h3>Research intern, IIT Delhi</h3>
+      <p class="when">May 2025 – June 2025 · Computer vision</p>
+      <p class="prose">Rain streaks are thin, mostly parallel lines that ruin photos and video. I worked on removing them from real-world footage: finding streaks from image gradients, filtering along their direction with OpenCV, and fine-tuning deraining models. I prepared the datasets, trained the models and checked the results on benchmark datasets.</p>
+    </div>
+  </section>
+
+  <section id="about">
+    <h2>About</h2>
+    <p class="prose">I'm a final-year Computer Science (Data Science) student at VIT Vellore, with a CGPA of 9.23. My projects so far sit underneath applications: a search index, an order book and a database's storage layer. I was a finalist at Code for Good 2025, the JP Morgan Chase hackathon in Bengaluru.</p>
+    <div class="now">
+      <p><b style="font-weight:600">Right now</b></p>
+      <p>Connecting tiny-hnsw to Qdrant and LanceDB for hybrid search, and working through how Neon separates Postgres compute from storage.</p>
+    </div>
+    <p class="tools">Rust · C · C++ · Python · JavaScript<br>Node.js · Express · React · MongoDB · Redis<br>Qdrant · LanceDB · Apache Spark · Databricks</p>
+  </section>
+</main>
+
+<footer id="contact">
+  <div class="wrap">
+    <h2 style="color:var(--ink)">Contact</h2>
+    <p><a href="mailto:rahulpiyush91@gmail.com">rahulpiyush91@gmail.com</a> · <a href="https://github.com/Rahulkumar20023">GitHub</a> · <a href="https://www.linkedin.com/in/rahul-kumar-52726327b/">LinkedIn</a> · <a href="https://drive.google.com/file/d/1OEEmuS-287_5x4veJMXZrQjXEduQ_1gc/view?usp=sharing" target="_blank" rel="noopener">Resume</a></p>
+  </div>
+</footer>
+
+<dialog id="pal" aria-label="Quick navigation">
+  <input type="text" placeholder="Jump to a section or project" aria-label="Filter">
+  <ul></ul>
+</dialog>
+
+<script>
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function fit(c, w, h) {
+  const d = devicePixelRatio || 1;
+  c.width = w * d; c.height = h * d; c.style.height = h + 'px';
+  const x = c.getContext('2d'); x.setTransform(d, 0, 0, d, 0, 0); return x;
+}
+function onVisible(el, cb) {
+  new IntersectionObserver(e => cb(e[0].isIntersecting)).observe(el);
+}
+
+/* ---------- HNSW demo ---------- */
+(() => {
+  const c = document.getElementById('hnsw'), out = document.getElementById('hnsw-out'), btn = document.getElementById('hnsw-run');
+  const N = 60, sizes = [N, 20, 6], H = 120, pad = 14;
+  let seed = 11; const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+  const P = Array.from({ length: N }, () => ({ u: .04 + rnd() * .92, v: rnd() }));
+  const dist = (a, b) => Math.hypot(a.u - b.u, (a.v - b.v) * .15);
+  const nb = sizes.map(m => {
+    const o = Array.from({ length: m }, () => []), k = m < 10 ? 2 : 3;
+    for (let i = 0; i < m; i++) {
+      [...Array(m).keys()].filter(j => j !== i).sort((a, b) => dist(P[i], P[a]) - dist(P[i], P[b])).slice(0, k)
+        .forEach(j => { if (!o[i].includes(j)) o[i].push(j); if (!o[j].includes(i)) o[j].push(i); });
+    }
+    // join any separate clusters with their shortest bridging edge, so every layer is one connected graph
+    const comp = () => {
+      const id = Array(m).fill(-1); let c = 0;
+      for (let i = 0; i < m; i++) if (id[i] < 0) { const st = [i]; id[i] = c; while (st.length) { const a = st.pop(); o[a].forEach(b => { if (id[b] < 0) { id[b] = c; st.push(b); } }); } c++; }
+      return { id, c };
+    };
+    for (let r = comp(); r.c > 1; r = comp()) {
+      let ba = 0, bb = 0, bd = Infinity;
+      for (let a = 0; a < m; a++) if (r.id[a] === 0) for (let b = 0; b < m; b++) if (r.id[b] !== 0) { const d = dist(P[a], P[b]); if (d < bd) { bd = d; ba = a; bb = b; } }
+      o[ba].push(bb); o[bb].push(ba);
+    }
+    return o;
+  });
+  let W, ctx, S = null, k = 0, timer, vis = true;
+  const X = u => pad + u * (W - 2 * pad), Y = (l, v) => (2 - l) * H + pad + v * (H - 2 * pad);
+
+  function search(q) {
+    const seen = new Set(), ev = i => { seen.add(i); return dist(P[i], q); };
+    let cur = 0; const st = [];
+    for (let l = 2; l >= 0; l--) {
+      st.push({ l, n: cur, kind: 'enter' });
+      for (;;) {
+        let best = cur, bd = ev(cur);
+        for (const j of nb[l][cur]) { const x = ev(j); if (x < bd) { bd = x; best = j; } }
+        st.push({ l, n: cur, kind: 'scan', ids: nb[l][cur].concat(cur), c: seen.size });
+        if (best === cur) break;
+        cur = best; st.push({ l, n: cur, kind: 'move', c: seen.size });
+      }
+    }
+    let t = 0; for (let i = 1; i < N; i++) if (dist(P[i], q) < dist(P[t], q)) t = i;
+    return { q, st, res: cur, truth: t, total: seen.size };
+  }
+
+  function draw() {
+    const cs = getComputedStyle(c), acc = cs.getPropertyValue('--accent'), mut = cs.getPropertyValue('--muted'),
+      line = cs.getPropertyValue('--line'), ask = cs.getPropertyValue('--ask');
+    ctx.clearRect(0, 0, W, 3 * H); ctx.font = '12px ' + cs.getPropertyValue('--mono');
+    for (let l = 0; l < 3; l++) {
+      const top = (2 - l) * H;
+      if (l < 2) { ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, top + H); ctx.lineTo(W, top + H); ctx.stroke(); }
+      ctx.fillStyle = mut; ctx.fillText('layer ' + l + ' (' + sizes[l] + ' points)', pad, top + 14);
+      ctx.strokeStyle = line; ctx.lineWidth = 1;
+      nb[l].forEach((ns, i) => ns.forEach(j => { if (i < j) { ctx.beginPath(); ctx.moveTo(X(P[i].u), Y(l, P[i].v)); ctx.lineTo(X(P[j].u), Y(l, P[j].v)); ctx.stroke(); } }));
+      ctx.fillStyle = mut;
+      for (let i = 0; i < sizes[l]; i++) { ctx.beginPath(); ctx.arc(X(P[i].u), Y(l, P[i].v), 2.5, 0, 7); ctx.fill(); }
+    }
+    if (!S) return;
+    ctx.strokeStyle = acc; ctx.fillStyle = acc;
+    for (let l = 0; l < 3; l++) { // query marker in every layer
+      const x = X(S.q.u), y = Y(l, S.q.v);
+      ctx.beginPath(); ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y); ctx.moveTo(x, y - 5); ctx.lineTo(x, y + 5); ctx.lineWidth = 1.5; ctx.stroke();
+    }
+    let prev = null, cnt = 0;
+    const pt = (l, n) => [X(P[n].u), Y(l, P[n].v)];
+    for (const s of S.st.slice(0, k)) {
+      if (s.kind === 'enter' && prev) {
+        ctx.setLineDash([3, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(...pt(prev.l, prev.n)); ctx.lineTo(...pt(s.l, s.n)); ctx.stroke(); ctx.setLineDash([]);
+      }
+      if (s.kind === 'move') { ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(...pt(prev.l, prev.n)); ctx.lineTo(...pt(s.l, s.n)); ctx.stroke(); }
+      if (s.kind === 'scan') { cnt = s.c; ctx.lineWidth = 1; s.ids.forEach(i => { ctx.beginPath(); ctx.arc(...pt(s.l, i), 5, 0, 7); ctx.stroke(); }); }
+      prev = { l: s.l, n: s.n };
+    }
+    if (prev) { ctx.beginPath(); ctx.arc(...pt(prev.l, prev.n), 4.5, 0, 7); ctx.fill(); }
+    const done = k >= S.st.length;
+    if (done) {
+      if (S.res !== S.truth) { ctx.strokeStyle = ask; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(...pt(0, S.truth), 8, 0, 7); ctx.stroke(); }
+      out.textContent = `Computed ${S.total} distances instead of ${N}. Returned point ${S.res}, ` +
+        (S.res === S.truth ? 'which is the exact nearest neighbour.' : `but the exact nearest is point ${S.truth} (red ring). Approximate search can miss.`);
+    } else out.textContent = `Distances computed so far: ${cnt}`;
+  }
+
+  function play(q) {
+    S = search(q); clearInterval(timer);
+    if (reduce) { k = S.st.length; draw(); return; }
+    k = 0; draw();
+    timer = setInterval(() => { if (!vis) return; k++; draw(); if (k >= S.st.length) clearInterval(timer); }, 260);
+  }
+  const rand = () => play({ u: .05 + Math.random() * .9, v: Math.random() });
+  const layout = () => { W = c.parentElement.clientWidth; ctx = fit(c, W, 3 * H); draw(); };
+  c.addEventListener('click', e => {
+    const r = c.getBoundingClientRect(), x = e.clientX - r.left, y = (e.clientY - r.top) % H;
+    const cl = n => Math.max(0, Math.min(1, n));
+    play({ u: cl((x - pad) / (W - 2 * pad)), v: cl((y - pad) / (H - 2 * pad)) });
+  });
+  btn.addEventListener('click', rand);
+  new ResizeObserver(layout).observe(c.parentElement);
+  onVisible(c, v => vis = v);
+  layout(); play({ u: .72, v: .5 });
+})();
+
+/* ---------- Order book simulation ---------- */
+(() => {
+  const el = document.getElementById('book'), tp = document.getElementById('tape'),
+    stat = document.getElementById('book-stat'), btn = document.getElementById('book-run');
+  const B = new Map(), A = new Map(), sz = () => 100 * (1 + (Math.random() * 9 | 0));
+  let n = 0, trades = [], run = !reduce, vis = true;
+  for (let i = 0; i < 8; i++) { B.set(9999 - i, sz()); A.set(10001 + i, sz()); }
+  const best = (m, f) => { let b = null; for (const p of m.keys()) if (b === null || f(p, b)) b = p; return b; };
+  const bb = () => best(B, (a, b) => a > b), ba = () => best(A, (a, b) => a < b);
+
+  function step() {
+    const x = Math.random(), lo = bb(), hi = ba(); n++;
+    if (x < .55) {
+      if (Math.random() < .5) { const p = hi - 1 - (Math.random() * 6 | 0); B.set(p, (B.get(p) || 0) + sz()); }
+      else { const p = lo + 1 + (Math.random() * 6 | 0); A.set(p, (A.get(p) || 0) + sz()); }
+    } else if (x < .8) {
+      const m = Math.random() < .5 ? B : A, ks = [...m.keys()];
+      if (ks.length > 6) m.delete(ks[Math.random() * ks.length | 0]);
+    } else {
+      const buy = Math.random() < .5, m = buy ? A : B; let q = sz();
+      while (q > 0 && m.size > 1) {
+        const p = buy ? ba() : bb(), av = m.get(p), f = Math.min(q, av);
+        q -= f; f === av ? m.delete(p) : m.set(p, av - f);
+        trades.unshift({ p, f, buy });
+      }
+      trades = trades.slice(0, 6);
+    }
+    while (B.size < 8) B.set(Math.min(...B.keys()) - 1, sz());
+    while (A.size < 8) A.set(Math.max(...A.keys()) + 1, sz());
+  }
+  const row = (p, s, cls, mx) => `<div class="lv ${cls}" style="--w:${(s / mx * 100).toFixed(0)}%"><span>${(p / 100).toFixed(2)}</span><span>${s}</span></div>`;
+  function render() {
+    const a = [...A].sort((x, y) => x[0] - y[0]).slice(0, 5), b = [...B].sort((x, y) => y[0] - x[0]).slice(0, 5);
+    const mx = Math.max(...a.map(r => r[1]), ...b.map(r => r[1]));
+    el.innerHTML = a.reverse().map(r => row(r[0], r[1], 'a', mx)).join('') +
+      `<div class="spr">spread ${((ba() - bb()) / 100).toFixed(2)}</div>` + b.map(r => row(r[0], r[1], 'b', mx)).join('');
+    tp.innerHTML = trades.map(t => `<div class="${t.buy ? 'buy' : 'sell'}">${t.buy ? 'buy ' : 'sell'} ${t.f} @ ${(t.p / 100).toFixed(2)}</div>`).join('') || '—';
+    stat.textContent = `${n} events simulated. Limit orders add liquidity; market orders match the best price first.`;
+  }
+  btn.textContent = run ? 'Pause' : 'Run';
+  btn.addEventListener('click', () => { run = !run; btn.textContent = run ? 'Pause' : 'Run'; });
+  onVisible(el, v => vis = v);
+  setInterval(() => { if (run && vis && !document.hidden) { step(); step(); render(); } }, 160);
+  render();
+})();
+
+/* ---------- Neon layer map ---------- */
+(() => {
+  const c = document.getElementById('neon'), out = document.getElementById('neon-out'),
+    flow = [...document.querySelectorAll('#flow .st')], bw = document.getElementById('n-bw');
+  const K = 6, LH = 30, top = 24, left = 36, lane = 64, ri = n => Math.random() * n | 0;
+  let W, H, ctx, L, lsn, sel, br;
+  const pulse = ids => { if (reduce) return; ids.forEach((id, i) => setTimeout(() => { flow[id].classList.add('on'); setTimeout(() => flow[id].classList.remove('on'), 280); }, i * 180)); };
+  const delta = (arr, n) => { const k0 = ri(K), k1 = Math.min(K, k0 + 1 + ri(2)); arr.a = n; return { t: 'd', k0, k1, a: n, b: n + 1 }; };
+  function init() {
+    L = [{ t: 'i', k0: 0, k1: K, a: 0, b: 0 }]; lsn = 0; sel = null; br = null; bw.hidden = true;
+    for (let i = 0; i < 7; i++) { L.push(delta([], lsn)); lsn++; }
+    out.textContent = 'Each rectangle is a delta layer of changes to some pages. Each vertical bar is an image layer, a full snapshot. Press Write, or click a row to read that page.';
+    layout();
+  }
+  const maxL = () => Math.max(16, lsn + 1, br ? br.n + 1 : 0);
+  const x = l => left + l / maxL() * (W - left - 12), y = k => top + k * LH;
+  function layout() { W = c.parentElement.clientWidth; H = top + K * LH + 10 + (br ? lane : 0); ctx = fit(c, W, H); draw(); }
+  function draw() {
+    const cs = getComputedStyle(c), g = n => cs.getPropertyValue(n).trim(), acc = g('--accent'), mut = g('--muted'), line = g('--line'), bid = g('--bid');
+    ctx.clearRect(0, 0, W, H); ctx.font = '11px ' + g('--mono'); ctx.lineWidth = 1;
+    ctx.fillStyle = mut; ctx.fillText('page', 4, 14); ctx.fillText('LSN (time) \u2192', W - 100, 14);
+    for (let k = 0; k < K; k++) { ctx.strokeStyle = line; ctx.beginPath(); ctx.moveTo(left, y(k)); ctx.lineTo(W - 8, y(k)); ctx.stroke(); ctx.fillStyle = mut; ctx.fillText('p' + k, 8, y(k) + LH / 2 + 4); }
+    const inSel = l => sel && sel.set.includes(l);
+    L.forEach((l, i) => {
+      const hot = inSel(l), old = l.old && !hot;
+      ctx.globalAlpha = old ? .4 : 1; ctx.setLineDash(l.old ? [3, 3] : []);
+      if (l.t === 'd') {
+        const w = Math.max(4, x(l.b) - x(l.a) - 2), h = (l.k1 - l.k0) * LH - 4;
+        ctx.fillStyle = acc; ctx.globalAlpha = hot ? .75 : old ? .12 : .25; ctx.fillRect(x(l.a), y(l.k0) + 2, w, h);
+        ctx.globalAlpha = old ? .4 : 1; ctx.strokeStyle = acc; ctx.strokeRect(x(l.a), y(l.k0) + 2, w, h);
+      } else {
+        ctx.strokeStyle = bid; ctx.lineWidth = hot ? 4 : 3; ctx.beginPath(); ctx.moveTo(x(l.a) + 1, y(l.k0) + 2); ctx.lineTo(x(l.a) + 1, y(l.k1) - 2); ctx.stroke(); ctx.lineWidth = 1;
+      }
+    });
+    ctx.globalAlpha = 1; ctx.setLineDash([]);
+    if (sel) { ctx.strokeStyle = acc; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(left, y(sel.r) + LH / 2); ctx.lineTo(x(lsn), y(sel.r) + LH / 2); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(x(lsn), y(sel.r) + LH / 2, 4, 0, 7); ctx.fill(); }
+    if (br) {
+      const y0 = top + K * LH + 12;
+      ctx.strokeStyle = acc; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(x(br.at), top); ctx.lineTo(x(br.at), y0 + 24); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(left, y0 + 24); ctx.lineTo(x(br.at), y0 + 24); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = mut; ctx.fillText('branch', 4, y0 + 28); ctx.fillText('reads parent layers, nothing copied', left + 6, y0 + 40);
+      br.L.forEach(l => { ctx.fillStyle = acc; ctx.globalAlpha = .25; ctx.fillRect(x(l.a), y0 + 10, Math.max(4, x(l.b) - x(l.a) - 2), 28); ctx.globalAlpha = 1; ctx.strokeStyle = acc; ctx.strokeRect(x(l.a), y0 + 10, Math.max(4, x(l.b) - x(l.a) - 2), 28); });
+    }
+  }
+  function read(r) {
+    const imgs = L.filter(l => l.t === 'i' && l.k0 <= r && r < l.k1), img = imgs.reduce((a, b) => b.a > a.a ? b : a);
+    const ds = L.filter(l => l.t === 'd' && l.k0 <= r && r < l.k1 && l.a >= img.a);
+    sel = { r, set: [img, ...ds] }; draw();
+    out.textContent = `Read page p${r} at LSN ${lsn}: start from the image at LSN ${img.a}` + (ds.length ? ` and replay ${ds.length} delta layer${ds.length > 1 ? 's' : ''} on top.` : '. Nothing to replay.');
+  }
+  document.getElementById('n-write').onclick = () => {
+    L.push(delta([], lsn)); lsn++; sel = null; layout(); pulse([0, 1, 2]);
+    out.textContent = `Write: Postgres sends WAL to the safekeepers, which acknowledge once a majority have it. The pageserver adds a delta layer at LSN ${lsn - 1}.`;
+  };
+  document.getElementById('n-read').onclick = () => read(ri(K));
+  document.getElementById('n-comp').onclick = () => {
+    if (L.some(l => l.t === 'i' && l.a === lsn && l.k1 - l.k0 === K)) { out.textContent = 'Nothing new to compact. Write something first.'; return; }
+    L.forEach(l => l.old = true); L.push({ t: 'i', k0: 0, k1: K, a: lsn, b: lsn }); sel = null; draw(); pulse([2, 3]);
+    out.textContent = `Compact: new image layers hold full pages at LSN ${lsn}, so reads replay fewer deltas. Older layers (dashed) are kept until they pass the retention window.`;
+  };
+  document.getElementById('n-branch').onclick = () => {
+    if (br) { out.textContent = 'This demo supports one branch. Press Reset to start over.'; return; }
+    br = { at: lsn, n: lsn, L: [] }; bw.hidden = false; layout();
+    out.textContent = `Branch created at LSN ${lsn}. It reads the parent's layers up to this point and stores only its own new writes. No data was copied.`;
+  };
+  bw.onclick = () => { br.L.push({ a: br.n, b: br.n + 1 }); br.n++; draw(); out.textContent = 'Branch write: stored as a new layer owned by the branch. The parent timeline is untouched.'; };
+  document.getElementById('n-reset').onclick = init;
+  c.addEventListener('click', e => { const r = Math.floor((e.clientY - c.getBoundingClientRect().top - top) / LH); if (r >= 0 && r < K) read(r); });
+  new ResizeObserver(layout).observe(c.parentElement);
+  init();
+})();
+
+/* ---------- Distributed lock demo ---------- */
+(() => {
+  const on = document.getElementById('lk-on'), run = document.getElementById('lk-run'),
+    log = document.getElementById('lk-log'), rec = document.getElementById('lk-rec'), out = document.getElementById('lk-out');
+  let timers = [];
+  const show = (r, m = {}) => { rec.innerHTML = `<div class="f ${m.price || ''}"><span>Asking price</span><b>${r.price}</b></div><div class="f ${m.status || ''}"><span>Status</span><b>${r.status}</b></div>`; };
+  const A = 'a', B = 'b';
+  const plan = lock => lock ? [
+    [A, 'Opens the lead and takes the lock', { price: '50L', status: 'New' }],
+    [B, 'Tries to open it: locked by A, so it waits', { price: '50L', status: 'New' }],
+    [A, 'Saves the price 55L and releases the lock', { price: '55L', status: 'New' }],
+    [B, 'Takes the lock, opens the latest copy, sets Negotiating', { price: '55L', status: 'Negotiating' }, { price: 'ok', status: 'ok' }]
+  ] : [
+    [A, 'Opens the lead', { price: '50L', status: 'New' }],
+    [B, 'Opens the same lead', { price: '50L', status: 'New' }],
+    [A, 'Saves the price 55L', { price: '55L', status: 'New' }],
+    [B, 'Saves Negotiating from the older copy it opened', { price: '50L', status: 'Negotiating' }, { price: 'lost', status: 'ok' }]
+  ];
+  function reset() {
+    timers.forEach(clearTimeout); timers = []; log.innerHTML = ''; show({ price: '50L', status: 'New' });
+    out.textContent = 'Press Run to see what happens when two people save the same lead.';
+  }
+  function play() {
+    reset(); const steps = plan(on.checked);
+    steps.forEach((st, i) => timers.push(setTimeout(() => {
+      log.insertAdjacentHTML('beforeend', `<li class="${st[0]}"><b>${st[0].toUpperCase()}</b>${st[1]}</li>`); show(st[2], st[3]);
+      if (i === steps.length - 1) out.textContent = on.checked ? 'Both changes kept. B was made to wait, then worked from the latest record.' : "A's price change was silently overwritten. Both people saved successfully, but one edit is gone.";
+    }, reduce ? 0 : i * 800)));
+  }
+  run.onclick = play; on.onchange = reset; reset();
+})();
+
+/* ---------- Quick navigation (Ctrl/Cmd + K) ---------- */
+(() => {
+  const dlg = document.getElementById('pal'), inp = dlg.querySelector('input'), ul = dlg.querySelector('ul');
+  const items = [['Projects', '#work', 'section'], ['tiny-hnsw', '#hnsw-sec', 'project'], ['LMAX-rs', '#book-sec', 'project'],
+    ['Neon architecture study', '#neon-sec', 'project'], ['Experience', '#experience', 'section'], ['About', '#about', 'section'], ['Contact', '#contact', 'section']];
+  const list = f => {
+    ul.innerHTML = items.filter(i => i[0].toLowerCase().includes(f.toLowerCase()))
+      .map(i => `<li><a href="${i[1]}">${i[0]}<span>${i[2]}</span></a></li>`).join('') || '<li style="padding:9px 12px;color:var(--muted)">No match</li>';
+  };
+  const open = () => { inp.value = ''; list(''); dlg.showModal(); inp.focus(); };
+  document.getElementById('pal-open').addEventListener('click', open);
+  addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); open(); } });
+  inp.addEventListener('input', () => list(inp.value));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { const a = ul.querySelector('a'); if (a) a.click(); } });
+  ul.addEventListener('click', e => { if (e.target.closest('a')) dlg.close(); });
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+})();
+</script>
+</body>
+</html>
